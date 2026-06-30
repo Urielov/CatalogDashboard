@@ -130,7 +130,7 @@ body{font-family:'Rubik',Arial,sans-serif!important;background:#f6f8fb!important
 .filter-actions{gap:12px!important;}
 select,.clear-btn,.export-btn{height:46px!important;border-radius:8px!important;border:1px solid #b9cbe2!important;background:#fff!important;color:#0b2f5b!important;font-size:14px!important;min-width:240px!important;padding:0 18px!important;}
 .clear-btn,.export-btn{min-width:128px!important;color:#1267d8!important;text-align:center!important;}
-.active-filters{min-height:0!important;margin-top:-8px!important;}
+.active-filters{min-height:0!important;margin-top:12px!important;padding-top:4px!important;}
 .kpis{gap:16px!important;}
 .kpi{min-height:116px!important;border-radius:14px!important;border:1px solid #e5edf7!important;background:#fff!important;box-shadow:0 1px 3px rgba(16,54,95,.06)!important;align-items:flex-end!important;text-align:right!important;padding:18px 28px!important;}
 .kpi .num{font-size:48px!important;line-height:.95!important;font-weight:700!important;color:#0b2f5b!important;}
@@ -1273,8 +1273,54 @@ h2.card-title{margin-bottom:32px!important;}
   direction:rtl!important;
 }
 </style>
+
+<style id="gov-header-dropdown-overlap-fix">
+/* מונע מהתפריטים של gov.il לכסות את אזור הסינונים והדרופדאונים של הדשבורד */
+.sticky-top,
+.sticky-top .filters,
+.sticky-top .filter-row,
+.sticky-top .filter-actions,
+.sticky-top select,
+.sticky-top button,
+.active-filters{
+  position:relative!important;
+  z-index:2147483000!important;
+}
+.kpis,
+.grid{
+  position:relative!important;
+  z-index:1!important;
+}
+</style>
+
+<style id="footer-spacing-fix">
+.gov-footer,
+.govil-footer,
+footer{
+  margin-top:16px !important;
+}
+</style>
+
+
+<style id="clear-filters-active-color-final">
+/* צבע לכפתור נקה סינונים רק כשיש בחירה/סינון פעיל */
+.clear-btn.has-active-filters{
+  background:#1267d8!important;
+  border-color:#1267d8!important;
+  color:#fff!important;
+}
+.clear-btn.has-active-filters:hover{
+  background:#0b4ea2!important;
+  border-color:#0b4ea2!important;
+  color:#fff!important;
+}
+</style>
+
 </head>
-<body><div class="page">
+<body>
+<script src="https://www.gov.il/govilHF/header-footer.js"></script>
+<script>load_HF('he','servicescompass','application','81118354-e792-4e08-9057-f7ae5200cbf9');</script>
+<div class="page">
 <div class="sticky-top">
 <h1 class="header"> <strong>דשבורד שירותים ממשלתיים</strong> <span style="font-weight:700; margin-right:12px;"> (עודכן בתאריך 30.06.2026) </span> </h1>
   <div class="filters">
@@ -1347,9 +1393,10 @@ dict.digital[MISSING_KEY]=MISSING_LABEL;dict.usage[MISSING_KEY]=MISSING_LABEL;di
 function isPopular(s){return ['6','3','8'].includes(String(s.TotalEstimateUsageId))}function isDigital2(s){return Number(s.DigitalLevelId)>=3}
 function docBucketForService(serviceId){const c=documents.filter(d=>String(d.ServiceId)===String(serviceId)).length;if(c>=5)return '5+';if(c>=1)return String(c);return ''}
 const docBucketMap={};documents.forEach(d=>{const sid=String(d.ServiceId);docBucketMap[sid]=(docBucketMap[sid]||0)+1});function bucketOf(s){const c=docBucketMap[String(s.ServiceId)]||0;if(c>=5)return '5+';if(c>=1)return String(c);return ''}
-function fillOffice(){const el=document.getElementById('officeFilter');el.innerHTML='<option value="">כל המשרדים</option>';(staticEntities.GovernmentOffices||[]).forEach(x=>{const o=document.createElement('option');o.value=x.GovernmentOfficeId;o.textContent=x.GovernmentOfficeName;el.appendChild(o)});el.addEventListener('change',()=>{state.office=el.value;render()});document.getElementById('scopeFilter').addEventListener('change',e=>{state.scope=e.target.value;render()});document.getElementById('clearFilters').addEventListener('click',clearAll);document.getElementById('exportExcel').addEventListener('click',exportExcel)}
+function fillOffice(){const el=document.getElementById('officeFilter');el.innerHTML='<option value="">כל המשרדים</option>';const excludedOfficeIds=new Set(['60','18','61','52','53','62']);(staticEntities.GovernmentOffices||[]).filter(x=>!excludedOfficeIds.has(String(x.GovernmentOfficeId))).forEach(x=>{const o=document.createElement('option');o.value=x.GovernmentOfficeId;o.textContent=x.GovernmentOfficeName;el.appendChild(o)});el.addEventListener('change',()=>{state.office=el.value;render()});document.getElementById('scopeFilter').addEventListener('change',e=>{state.scope=e.target.value;render()});document.getElementById('clearFilters').addEventListener('click',clearAll);document.getElementById('exportExcel').addEventListener('click',exportExcel)}
 function countBy(list,field){const o={};list.forEach(x=>{const v=x[field];if(v!==undefined&&v!==null&&v!=='')o[v]=(o[v]||0)+1});return o}
 function filtered(ignoreService=false){return services.filter(s=>String(s.StatusId)==='1').filter(s=>(!state.office||String(s.GovernmentOfficeId)===state.office)&& (state.scope!=='popular'||isPopular(s)) && fieldFilterMatches(s.DigitalLevelId,state.digital)&&fieldFilterMatches(s.TotalEstimateUsageId,state.usage)&&fieldFilterMatches(s.IndividualOrCorporationId,state.person)&&fieldFilterMatches(s.TargetAudiensTypeId,state.audience)&&fieldFilterMatches(s.ServiceTypeId,state.type)&&(!state.docBucket||(state.docBucket===MISSING_KEY?bucketOf(s)==='':bucketOf(s)===state.docBucket))&&(ignoreService||!state.service||String(s.ServiceId)===state.service))}
+function hasActiveFilters(){return !!(state.office||state.digital||state.usage||state.person||state.audience||state.type||state.docBucket||state.service||state.scope!=='all')}function updateClearButtonState(){const btn=document.getElementById('clearFilters');if(!btn)return;btn.classList.toggle('has-active-filters',hasActiveFilters())}
 function setState(key,val){state[key]=String(val);render()}function clearAll(){Object.assign(state,{office:'',scope:'all',digital:'',usage:'',person:'',audience:'',type:'',docBucket:'',service:''});document.getElementById('officeFilter').value='';document.getElementById('scopeFilter').value='all';render()}
 function renderChips(){const el=document.getElementById('activeFilters');el.innerHTML='';const chips=[];if(state.digital)chips.push(['digital','רמת דיגיטל: '+dict.digital[state.digital]]);if(state.usage)chips.push(['usage','היקף שימוש: '+dict.usage[state.usage]]);if(state.person)chips.push(['person','סוג צרכן: '+dict.person[state.person]]);if(state.audience)chips.push(['audience','קהל יעד: '+dict.audience[state.audience]]);if(state.type)chips.push(['type','סוג שירות: '+dict.type[state.type]]);if(state.docBucket)chips.push(['docBucket','אסמכתאות: '+dict.docBucket[state.docBucket]]);if(state.service){const svc=services.find(s=>String(s.ServiceId)===String(state.service));chips.push(['service','שירות: '+((svc&&svc.ServiceName?svc.ServiceName.trim():'שירות '+state.service))])}chips.forEach(([k,t])=>{const c=document.createElement('button');c.className='chip';c.textContent=t+' ✕';c.onclick=()=>{state[k]='';render()};el.appendChild(c)})}
 function renderKpis(list){const total=list.length;const popular=list.filter(isPopular).length;const digital=list.filter(isDigital2).length;kpiActive.textContent=fmt(total);kpiPopular.textContent=fmt(popular);const kpiPopularTotal=document.getElementById('kpiPopularTotal');if(kpiPopularTotal)kpiPopularTotal.textContent=fmt(total);kpiDigital2.textContent=total?Math.round((digital/total)*100)+'%':'0%'}
@@ -1358,7 +1405,14 @@ function makeChart(old,canvasId,type,labels,values,cols,click){if(old)old.destro
 function renderDigital(list){const levels=staticEntities.DigitalLevels||[],counts=countBy(list,'DigitalLevelId'),missing=list.filter(s=>isMissingValue(s.DigitalLevelId)).length,items=levels.map((x,i)=>({id:x.DigitalLevelId,label:getDigitalLevelLabel(x.DigitalLevelId,x.DigitalLevelName),value:counts[x.DigitalLevelId]||0,color:levelColors[x.DigitalLevelId]||colors[i]}));items.push({id:MISSING_KEY,label:MISSING_LABEL,value:missing,color:MISSING_COLOR});const labels=items.map(x=>x.label),values=items.map(x=>x.value),cols=items.map(x=>x.color);digitalChart=makeChart(digitalChart,'digitalChart','pie',labels,values,cols,i=>setState('digital',items[i].id));renderLegend('digitalLegend',labels,values,cols,i=>setState('digital',items[i].id))}
 function renderBarList(id,rows,onClick,colorCycle=true){const el=document.getElementById(id);el.innerHTML='';if(!rows.length){el.innerHTML='<div class="empty-msg">אין נתונים להצגה</div>';return}const max=Math.max(1,...rows.map(r=>r.value));rows.forEach((r,i)=>{const div=document.createElement('div');div.className='bar-row';div.title=`${r.label}: ${fmt(r.value)}`;if(r.selected){div.style.background='#eaf3ff';div.style.borderRadius='6px'}if(onClick)div.onclick=()=>onClick(r);const col=safeColor(r.color||(colorCycle?colors[i%colors.length]:'#0b4ea2'));div.innerHTML=`<div class="bar-label">${escapeHtml(r.label)}</div><div class="bar-track"><div class="bar-fill" style="width:${(r.value/max*100).toFixed(1)}%;background:${col}"></div></div><div class="bar-value">${escapeHtml(fmt(r.value))}</div>`;el.appendChild(div)})}
 function renderTypes(list){const counts=countBy(list,'ServiceTypeId'),missing=list.filter(s=>isMissingValue(s.ServiceTypeId)).length,rows=(staticEntities.ServiceTypes||[]).map(x=>({id:x.ServiceTypeId,label:x.ServiceTypeName,value:counts[x.ServiceTypeId]||0,color:'#0b4ea2'})).sort((a,b)=>b.value-a.value);if(missing>0){rows.push({id:MISSING_KEY,label:MISSING_LABEL,value:missing,color:MISSING_COLOR});rows.sort((a,b)=>b.value-a.value);}renderBarList('typeBars',rows,r=>setState('type',r.id),false)}
-function renderTopServices(list){const base=(state.service?filtered(true):list).map(s=>({id:s.ServiceId,value:Number(s.SumTotalUsege)||0})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value).slice(0,10);const colorByService={};base.forEach((r,i)=>{colorByService[String(r.id)]=colors[i%colors.length]});const rows=list.map(s=>({id:s.ServiceId,label:(s.ServiceName||('שירות '+s.ServiceId)).trim(),value:Number(s.SumTotalUsege)||0,selected:String(state.service)===String(s.ServiceId),color:colorByService[String(s.ServiceId)]})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value).slice(0,10);renderBarList('topServicesBars',rows,r=>{state.service=String(state.service)===String(r.id)?'':String(r.id);render()},true)}
+const EXCLUDED_POPULAR_SERVICES=new Set([
+'אתר Gov.il',
+'מוצר הדיוור הממשלתי - Notify G2',
+'רשימות תפוצה - SMOOVE',
+'מערכת ההזדהות הלאומית',
+'מיניסייט GovExtra'
+]);
+function renderTopServices(list){const base=(state.service?filtered(true):list).map(s=>({id:s.ServiceId,value:Number(s.SumTotalUsege)||0})).filter(x=>x.value>0 && !EXCLUDED_POPULAR_SERVICES.has(x.label)).sort((a,b)=>b.value-a.value).slice(0,10);const colorByService={};base.forEach((r,i)=>{colorByService[String(r.id)]=colors[i%colors.length]});const rows=list.map(s=>({id:s.ServiceId,label:(s.ServiceName||('שירות '+s.ServiceId)).trim(),value:Number(s.SumTotalUsege)||0,selected:String(state.service)===String(s.ServiceId),color:colorByService[String(s.ServiceId)]})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value).slice(0,10);renderBarList('topServicesBars',rows,r=>{state.service=String(state.service)===String(r.id)?'':String(r.id);render()},true)}
 function renderAudience(list){const el=document.getElementById('audienceBars');el.innerHTML='';const arr=staticEntities.TargetAudiensTypes||[],counts=countBy(list,'TargetAudiensTypeId'),missing=list.filter(s=>isMissingValue(s.TargetAudiensTypeId)).length,rows=arr.map((x,i)=>({id:x.TargetAudiensTypeId,label:x.TargetAudiensTypeName,value:counts[x.TargetAudiensTypeId]||0,color:colors[i%colors.length]}));if(missing>0)rows.push({id:MISSING_KEY,label:MISSING_LABEL,value:missing,color:MISSING_COLOR});const max=Math.max(1,...rows.map(r=>r.value));rows.forEach((r,i)=>{const d=document.createElement('div');d.className='vcol';d.title=`${r.label}: ${fmt(r.value)}`;d.onclick=()=>setState('audience',r.id);d.innerHTML=`<div class="vnum">${escapeHtml(fmt(r.value))}</div><div class="vbar" style="height:${Math.max(3,r.value/max*150)}px;background:${safeColor(r.color)}"></div><div class="vlabel">${escapeHtml(r.label)}</div>`;el.appendChild(d)})}
 function renderUsage(list){
   const el=document.getElementById('usageChart');
@@ -1546,7 +1600,7 @@ function initAudienceDetails(){
 }
 
 document.getElementById('legendIndividual').onclick=()=>setState('person','1');document.getElementById('legendCorp').onclick=()=>setState('person','2');
-function render(){document.getElementById('officeFilter').value=state.office;document.getElementById('scopeFilter').value=state.scope;const list=filtered();renderChips();renderKpis(list);renderTopServices(list);renderDigital(list);renderUsage(list);renderAudience(list);renderDocsSummary(list);renderTypes(list)}initAudienceDetails();fillOffice();render();
+function render(){document.getElementById('officeFilter').value=state.office;document.getElementById('scopeFilter').value=state.scope;updateClearButtonState();const list=filtered();renderChips();renderKpis(list);renderTopServices(list);renderDigital(list);renderUsage(list);renderAudience(list);renderDocsSummary(list);renderTypes(list)}initAudienceDetails();fillOffice();render();
 </script><style>
 /* Body-level tooltip portal: prevents clipping by cards/grid/page */
 .body-usage-tooltip{
@@ -2268,4 +2322,29 @@ body.audience-modal-is-open .sticky-top{
 }
 </style>
 
+
+
+<style id="govil-dashboard-zindex-final-fix">
+/* תיקון סופי: אזור הדשבורד לא אמור להתחרות ב-header של gov.il */
+.sticky-top{
+  z-index: 1 !important;
+}
+
+/* גם אם קיימים תיקונים קודמים בקובץ, השכבות של הדשבורד נשארות נמוכות */
+.page,
+.filters,
+.filter-row,
+.filter-actions,
+.active-filters{
+  z-index: auto !important;
+}
+
+/* הפופאפ הפנימי של קהלי יעד עדיין צריך להיות מעל הדשבורד */
+.audience-modal-backdrop.open{
+  z-index: 20000 !important;
+}
+.audience-modal{
+  z-index: 20001 !important;
+}
+</style>
 </body></html>
